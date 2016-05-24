@@ -1,4 +1,5 @@
 require 'csv'
+require 'erb'
 require 'sunlight/congress'
 
 Sunlight::Congress.api_key = "e179a6973728c4dd3fb1204283aaccb5"
@@ -21,9 +22,32 @@ def print_name_zipcodes
     zipcode = clean_zipcode(row[:zipcode])
 
     legislators = legislators_by_zipcode(zipcode)
-    puts "#{name} #{zipcode} #{legislators}"
+    puts "#{name} #{zipcode} #{legislators}".class
   end
 end
 
-# p legislators_by_zipcode("68787")
-puts print_name_zipcodes
+def attendees_names
+  @contents.map { |row| row[3] }
+end
+
+def attendees_legislators
+  zipcodes = @contents.map { |attendee| clean_zipcode(attendee[:zipcode]) }
+  legislators = zipcodes.map { |zipcode| legislators_by_zipcode(zipcode) }
+  legislators
+end
+
+template_letter = File.read "../form_letter.html"
+
+@contents.each do |row|
+  name = row[:first_name]
+
+  zipcode = clean_zipcode(row[:zipcode])
+
+  legislators = legislators_by_zipcode(zipcode).join(", ")
+
+
+  personal_letter = template_letter.gsub('FIRST_NAME', name )
+  personal_letter.gsub!('LEGISLATORS', legislators )
+
+  puts personal_letter
+end
